@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>File(s) size</title>
+
+        <script src="./src/js/disassembler.js"></script>
+    </head>
+
+    <body>
+        <form name="uploadForm">
+            <div>
+            <input id="uploadInput" type="file" name="myFiles">
+            </div>
+            <div><input type="submit" value="Send file"></div>
+        </form>
+
+        <table id="disassembled">
+
+        </table>
+
+        <script>
+            function disassemble() {
+                let extension = this.files[0].name.split(".").pop();
+
+
+                if (extension !== "ch8") {
+                    throw "Invalid file";
+                }
+
+                this.files[0].arrayBuffer().then(arrayBuffer => {
+                    let machineCode = new Uint8Array(arrayBuffer);
+
+                    let decoded = chip8Disassemble(machineCode);
+
+                    let byteCount = 0;
+                    let htmlRep = decoded.reduce((htmlString, descriptor) => {
+                        let row = "";
+                        console.log(descriptor);
+                        //ByteCount
+                        row += `<td>${(byteCount+=2).toString(16).toUpperCase().padStart(3,"0")}</td>`;
+
+                        //The raw bytecode
+                        row += `<td>0x${descriptor.raw.map(byte => byte.toString(16).padStart(2,'0')).join("").toUpperCase()}<td/>`;
+
+                        //formatted decoded instruction
+                        row += `<td>${descriptor.toString()}</td>`;
+
+                        
+                        return `${htmlString}<tr>${row}</tr>`
+                    }, "");
+
+                    document.getElementById("disassembled").innerHTML = htmlRep;
+                })
+
+
+            }
+
+            document.getElementById("uploadInput").addEventListener("change", disassemble, false);
+        </script>
+    </body>
+</html>
