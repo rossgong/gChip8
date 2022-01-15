@@ -1,18 +1,217 @@
 package chip8
 
+import (
+	"fmt"
+	"math/rand"
+)
+
 //Defines the alu functions of the chip8 cpu
 //These for the most part map to opCode functions
 
 //CLS opcode
 /*
 TODO: Implement GPU
-func clearDisplay(display *GPU) error {
+func clearDisplay(display *GPU) Operation {
 	return GPU.clear()
 }
 */
 
 //Return from subroutine
+func subroutineReturn(cpu *CPU) (Operation, error) {
+	if cpu.stackPointer > 0 {
+		return func() {
+			cpu.programCounter = cpu.stack[cpu.stackPointer]
+			cpu.stackPointer--
+		}, nil
+	} else {
+		return nil, fmt.Errorf("ret error: stack empty, nothing to return too")
+	}
+}
+
+func jump(programCounter *Address, address Address) Operation {
+	return func() {
+		*programCounter = address
+	}
+}
+
+func subroutineCall(cpu *CPU, subroutine Address) (Operation, error) {
+	if cpu.stackPointer < maxSubroutineLevel {
+		return func() {
+			cpu.stack[cpu.stackPointer] = cpu.programCounter
+			cpu.programCounter = subroutine
+			cpu.stackPointer++
+		}, nil
+	} else {
+		return nil, fmt.Errorf("call error: stack overflow")
+	}
+}
+
+func skipInstructionIfTrue(programCounter *Address, condition bool) Operation {
+	return func() {
+		if condition {
+			*programCounter += instructionSize
+		}
+	}
+}
+
+//Load value into register number [0x0-0xF]
+func loadRegister(vX *Register, value Register) Operation {
+	return func() {
+		*vX = value
+	}
+}
+
+func or(vX *Register, vY Register) Operation {
+	return func() {
+		*vX |= vY
+	}
+}
+
+func and(vX *Register, vY Register) Operation {
+	return func() {
+		*vX &= vY
+	}
+}
+
+func xor(vX *Register, vY Register) Operation {
+	return func() {
+		*vX ^= vY
+	}
+}
+
+func add(status *Register, vX *Register, vY Register) Operation {
+	return func() {
+		temp := *vX
+		*vX += vY
+		if temp < *vX { //overflow
+			*status = 1
+		} else {
+			*status = 0
+		}
+
+	}
+}
+
+func subtract(status *Register, vX *Register, vY Register) Operation {
+	return func() {
+		temp := *vX
+		*vX -= vY
+		if temp > vY { //NOT borrow
+			*status = 1
+		} else {
+			*status = 0
+		}
+	}
+}
+
+func shiftRight(status *Register, vX *Register) Operation {
+	return func() {
+		*status = *vX & 1 //Shift right bit unto status
+		*vX >>= 1
+	}
+}
+
+func subtractN(status *Register, vX *Register, vY Register) Operation {
+	return func() {
+		temp := *vX
+		*vX = vY - *vX
+		if vY > temp { //NOT borrow
+			*status = 1
+		} else {
+			*status = 0
+		}
+	}
+}
+
+func shiftLeft(status *Register, vX *Register) Operation {
+	return func() {
+		*status = *vX >> 7 //Shift Left bit unto status
+		*vX <<= 1
+	}
+}
+
+//Load value into I
+func loadAddress(registerI *Address, value Address) Operation {
+	return func() {
+		*registerI = value
+	}
+}
+
+func jumpOffset(programCounter *Address, offset Register, address Address) Operation {
+	return jump(programCounter, address+Address(offset))
+}
+
+func randByteMasked(rand *rand.Rand, vX *Register, mask Register) Operation {
+	return func() {
+		rand := Register(rand.Uint64() >> 56) //Shift random uin64 56 places in order to have only 8 bits of random
+		*vX = rand & mask
+	}
+}
+
 /*
-TODO: Implement CPU
-func subroutineReturn(cpu *CPU)
+TODO: Implement GPU
 */
+func draw(cpu *CPU, vX *Register, vY Register, nibble uint8) Operation {
+	return nil
+}
+
+func loadDelay(delay Register, vX *Register) Operation {
+	return func() {
+		*vX = delay
+	}
+}
+
+func loadKeyPress(cpu *CPU) Operation {
+	return nil
+}
+
+func setDelay(delayRegister *Register, vX Register) Operation {
+	return func() {
+		*delayRegister = vX
+	}
+}
+
+func setSound(soundTimer *Register, vX Register) Operation {
+	return func() {
+		*soundTimer = vX
+	}
+}
+
+func addI(registerI *Address, vX Register) Operation {
+	return func() {
+		*registerI += Address(vX)
+	}
+}
+
+func loadDigit(registerI *Address, vX Register) Operation {
+	return func() {
+		*registerI = (Address(vX) * 5) + digitSpriteLocation
+	}
+}
+
+/*
+	TODO: Needs memory
+*/
+func storeBCD(registerI Address, vX Register /*, memory*/) Operation {
+	return func() {
+
+	}
+}
+
+/*
+	TODO: Needs memory
+*/
+func storeRegisters(registers *[registerCount]Register, registerI Address /*, memory*/) Operation {
+	return func() {
+
+	}
+}
+
+/*
+	TODO: Needs memory
+*/
+func loadRegisters(registers *[registerCount]Register, registerI Address /*, memory*/) Operation {
+	return func() {
+
+	}
+}
