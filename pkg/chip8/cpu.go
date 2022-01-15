@@ -1,15 +1,18 @@
 package chip8
 
+import "math/rand"
+
 type (
-	Register uint8
-	Address  uint16
+	Register  uint8
+	Address   uint16
+	Operation func()
 )
 
 const (
-	registerCount  = 16
-	statusRegister = 0xF //The F register is used for any status flags
-
+	registerCount      = 16
 	maxSubroutineLevel = 16
+	instructionSize    = 2   //bytes
+	statusRegister     = 0xF //The F register is used for any status flags
 )
 
 type CPU struct {
@@ -22,4 +25,9 @@ type CPU struct {
 	//Internal data
 	programCounter Address
 	stackPointer   Register
+	stack          [maxSubroutineLevel]Address
+
+	execute Operation
+
+	randomSource rand.Rand
 }
