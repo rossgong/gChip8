@@ -6,9 +6,10 @@ import (
 )
 
 type (
-	Register  uint8
-	Address   uint16
-	Operation func()
+	Register    uint8
+	Address     uint16
+	Instruction uint16
+	Operation   func()
 )
 
 const (
@@ -34,6 +35,34 @@ type CPU struct {
 	execute Operation
 
 	randomSource rand.Rand
+}
+
+func (cpu *CPU) Cycle() error {
+	//fetch
+	opcode, err := cpu.fetch()
+	if err == nil {
+		return err
+	}
+
+	//decode
+	op, err := cpu.decode(opcode)
+	if err == nil {
+		return err
+	}
+	//execute
+	op()
+	return nil
+}
+
+func (cpu *CPU) fetch() (Instruction, error) {
+	address := cpu.programCounter
+	cpu.programCounter += 2
+	_ = address
+	return 0, fmt.Errorf("fetch error not implemented")
+}
+
+func (cpu *CPU) decode(opcode Instruction) (Operation, error) {
+	return nil, fmt.Errorf("decode error: not implemented")
 }
 
 //Error functions
