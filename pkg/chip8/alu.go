@@ -15,6 +15,9 @@ func clearDisplay(display *GPU) Operation {
 	return GPU.clear()
 }
 */
+func clearDisplay() (Operation, error) {
+	return nil, fmt.Errorf("cls error: display not implemented")
+}
 
 //Return from subroutine
 func subroutineReturn(cpu *CPU) (Operation, error) {
@@ -32,6 +35,10 @@ func jump(programCounter *Address, address Address) Operation {
 	return func() {
 		*programCounter = address
 	}
+}
+
+func jumpOffset(programCounter *Address, offset byte, address Address) Operation {
+	return jump(programCounter, address+Address(offset))
 }
 
 func subroutineCall(cpu *CPU, subroutine Address) (Operation, error) {
@@ -137,10 +144,6 @@ func loadAddress(registerI *Address, value Address) Operation {
 	}
 }
 
-func jumpOffset(programCounter *Address, offset byte, address Address) Operation {
-	return jump(programCounter, address+Address(offset))
-}
-
 func randByteMasked(rand *rand.Rand, vX *byte, mask byte) Operation {
 	return func() {
 		rand := byte(rand.Uint64() >> 56) //Shift random uin64 56 places in order to have only 8 bits of random
@@ -155,20 +158,8 @@ func draw(cpu *CPU, vX *byte, vY byte, nibble uint8) Operation {
 	return nil
 }
 
-func loadDelay(delay byte, vX *byte) Operation {
-	return func() {
-		*vX = delay
-	}
-}
-
 func loadKeyPress(cpu *CPU) Operation {
 	return nil
-}
-
-func setDelay(delayRegister *byte, vX byte) Operation {
-	return func() {
-		*delayRegister = vX
-	}
 }
 
 func setSound(soundTimer *byte, vX byte) Operation {
@@ -193,25 +184,19 @@ func loadDigit(registerI *Address, vX byte) Operation {
 	TODO: Needs memory
 */
 func storeBCD(registerI Address, vX byte /*, memory*/) Operation {
-	return func() {
-
-	}
+	return nil
 }
 
 /*
 	TODO: Needs memory
 */
 func storeRegisters(registers *[registerCount]byte, registerI Address /*, memory*/) Operation {
-	return func() {
-
-	}
+	return nil
 }
 
 /*
 	TODO: Needs memory
 */
 func loadRegisters(registers *[registerCount]byte, registerI Address /*, memory*/) Operation {
-	return func() {
-
-	}
+	return nil
 }

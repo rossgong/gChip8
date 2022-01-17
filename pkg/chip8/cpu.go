@@ -33,7 +33,7 @@ type CPU struct {
 
 	execute Operation
 
-	randomSource rand.Rand
+	random rand.Rand
 }
 
 func (cpu *CPU) Cycle() error {
@@ -89,20 +89,37 @@ func (cpu *CPU) decode(opcode Instruction) (Operation, error) {
 		yRegister := cpu.Registers[maskYRegister(opcode)]
 		lastNibble := opcode & 0x000F //Mask to solo the last nibble\
 		op := decode8(&cpu.Registers[statusRegister], xRegister, yRegister, lastNibble)
-		if op == nil {
-			return op, fmt.Errorf("decode error: 0x%X not implemented", opcode)
-		} else {
+
+		//This is needed as not all 0x8xxx opcodes are valid
+		if op != nil {
 			return op, nil
 		}
-	case 0x9000:
-	case 0xA000:
-	case 0xB000:
-	case 0xC000:
-	case 0xD000:
-	case 0xE000:
+	case 0x9000: //SNE Skip if register X is not equal to register Y. Opcode must end in 0?
+		if opcode&0x000F == 0 {
+			return skipInstructionIfTrue(&cpu.programCounter,
+				cpu.Registers[maskXRegister(opcode)] != cpu.Registers[maskYRegister(opcode)]), nil
+		}
+	case 0xA000: //LD Load address into I
+		return loadAddress(&cpu.RegisterI, maskAddress(opcode)), nil
+	case 0xB000: //JP Offset opcode address with register 0 and jump there
+		return jumpOffset(&cpu.programCounter, cpu.Registers[0], maskAddress(opcode)), nil
+	case 0xC000: //RND load a register x with a random byte AND a byte mask
+		return randByteMasked(&cpu.random, &cpu.Registers[maskXRegister(opcode)], maskEndingByte(opcode)), nil
+	case 0xD000: //DRW
+		break
+	case 0xE000: //Keyboard functions
+		break
 	case 0xF000:
+		xRegister := &cpu.Registers[maskXRegister(opcode)]
+		lastNibble := opcode & 0x000F //Mask to solo the last nibble\
+		op := decodeF(cpu, xRegister, lastNibble)
+
+		//This is needed as not all 0xFxxx opcodes are valid
+		if op != nil {
+			return op, nil
+		}
 	}
-	return nil, fmt.Errorf("decode error: 0x%X not implemented", opcode)
+	return nil, fmt.Errorf("decode error: 0x%X not implemented/supported", opcode)
 }
 
 //Function to make decode 0x8xxx not cloud up the decode function
@@ -126,6 +143,30 @@ func decode8(statusRegister *byte, xRegister *byte, yValue byte, lastNibble Inst
 		return subtractN(statusRegister, xRegister, yValue)
 	case 0x000E: //SHL Store registerX << 1 into register X
 		return shiftLeft(statusRegister, xRegister)
+	}
+	return nil
+}
+
+func decodeF(cpu *CPU, xRegister *byte, lastNibble Instruction) Operation {
+	switch lastNibble {
+	case 0x07: //LD Load delay into register X
+		return loadRegister(xRegister, cpu.DelayRegister)
+	case 0x0A: //LD Load Keypress
+		return loadKeyPress(cpu)
+	case 0x15: //LD Load register X into delay
+		return loadRegister(&cpu.DelayRegister, *xRegister)
+	case 0x18: //LD Load register X into sound
+		return loadRegister(&cpu.SoundRegister, *xRegister)
+	case 0x1E: //ADD Add register X into I
+		return addI(&cpu.RegisterI, *xRegister)
+	case 0x29: //LD Load location of digit sprite into I
+		return loadDigit(&cpu.RegisterI, *xRegister)
+	case 0x33: //LD Store BCD representations of register x into I, I+1, I+2
+		return storeBCD(cpu.RegisterI, *xRegister) //TODO: add memory
+	case 0x55: //LD Store registers starting at memory location I
+		return storeRegisters(&cpu.Registers, cpu.RegisterI)
+	case 0x65: //LD Load registers from memory locations starting at location I
+		return loadRegisters(&cpu.Registers, cpu.RegisterI)
 	}
 	return nil
 }
