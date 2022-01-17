@@ -162,12 +162,6 @@ func loadKeyPress(cpu *CPU) Operation {
 	return nil
 }
 
-func setSound(soundTimer *byte, vX byte) Operation {
-	return func() {
-		*soundTimer = vX
-	}
-}
-
 func addI(registerI *Address, vX byte) Operation {
 	return func() {
 		*registerI += Address(vX)

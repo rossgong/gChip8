@@ -65,7 +65,8 @@ func (cpu *CPU) decode(opcode Instruction) (Operation, error) {
 
 	switch startingNibble {
 	case 0x0000:
-		//TODO: SYS CALLS
+		lastNibble := byte(opcode & 0x00FF) //Mask to solo the last nibble
+		return decode0(cpu, lastNibble)
 	case 0x1000: //JP instruction
 		return jump(&cpu.programCounter, maskAddress(opcode)), nil
 	case 0x2000: //CALL instruction
@@ -87,8 +88,8 @@ func (cpu *CPU) decode(opcode Instruction) (Operation, error) {
 	case 0x8000: //Various math functions requires both registers
 		xRegister := &cpu.Registers[maskXRegister(opcode)]
 		yRegister := cpu.Registers[maskYRegister(opcode)]
-		lastNibble := opcode & 0x000F //Mask to solo the last nibble\
-		op := decode8(&cpu.Registers[statusRegister], xRegister, yRegister, lastNibble)
+		lastNibble := opcode & 0x000F //Mask to solo the last nibble
+		op := decode8(&cpu.Registers[statusRegister], xRegister, yRegister, byte(lastNibble))
 
 		//This is needed as not all 0x8xxx opcodes are valid
 		if op != nil {
@@ -111,8 +112,8 @@ func (cpu *CPU) decode(opcode Instruction) (Operation, error) {
 		break
 	case 0xF000:
 		xRegister := &cpu.Registers[maskXRegister(opcode)]
-		lastNibble := opcode & 0x000F //Mask to solo the last nibble\
-		op := decodeF(cpu, xRegister, lastNibble)
+		lastByte := byte(opcode & 0x00FF) //Mask to solo the last byte
+		op := decodeF(cpu, xRegister, lastByte)
 
 		//This is needed as not all 0xFxxx opcodes are valid
 		if op != nil {
@@ -122,9 +123,19 @@ func (cpu *CPU) decode(opcode Instruction) (Operation, error) {
 	return nil, fmt.Errorf("decode error: 0x%X not implemented/supported", opcode)
 }
 
+func decode0(cpu *CPU, lastByte byte) (Operation, error) {
+	switch lastByte {
+	case 0xE0: //CLS clear display
+		return clearDisplay()
+	case 0xEE: //RET Return from subroutine
+		return subroutineReturn(cpu)
+	}
+	return nil, fmt.Errorf("decode error: 0x00%X not implemented/supported", lastByte)
+}
+
 //Function to make decode 0x8xxx not cloud up the decode function
-func decode8(statusRegister *byte, xRegister *byte, yValue byte, lastNibble Instruction) Operation {
-	switch lastNibble {
+func decode8(statusRegister *byte, xRegister *byte, yValue byte, lastByte byte) Operation {
+	switch lastByte {
 	case 0x0000: //LD Load register Y into register X
 		return loadRegister(xRegister, yValue)
 	case 0x0001: //OR Store registerX OR registerY into register X
@@ -147,8 +158,8 @@ func decode8(statusRegister *byte, xRegister *byte, yValue byte, lastNibble Inst
 	return nil
 }
 
-func decodeF(cpu *CPU, xRegister *byte, lastNibble Instruction) Operation {
-	switch lastNibble {
+func decodeF(cpu *CPU, xRegister *byte, lastByte byte) Operation {
+	switch lastByte {
 	case 0x07: //LD Load delay into register X
 		return loadRegister(xRegister, cpu.DelayRegister)
 	case 0x0A: //LD Load Keypress
