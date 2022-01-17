@@ -174,23 +174,29 @@ func loadDigit(registerI *Address, vX byte) Operation {
 	}
 }
 
-/*
-	TODO: Needs memory
-*/
-func storeBCD(registerI Address, vX byte /*, memory*/) Operation {
-	return nil
+func storeBCD(registerI Address, vX byte, memory *Memory) Operation {
+	return func() {
+		//i < 3 is so it includes the 0 and detects when the value overflows janky but works
+		for i := Address(2); i < 3; i-- {
+			//Get the ones place and then "shift" one place over
+			memory[registerI+i] = vX % 10
+			vX /= 10
+		}
+	}
 }
 
-/*
-	TODO: Needs memory
-*/
-func storeRegisters(registers *[registerCount]byte, registerI Address /*, memory*/) Operation {
-	return nil
+func storeRegisters(registers *[registerCount]byte, registerI Address, memory *Memory) Operation {
+	return func() {
+		for i, value := range registers {
+			memory[registerI+Address(i)] = value
+		}
+	}
 }
 
-/*
-	TODO: Needs memory
-*/
-func loadRegisters(registers *[registerCount]byte, registerI Address /*, memory*/) Operation {
-	return nil
+func loadRegisters(registers *[registerCount]byte, registerI Address, memory *Memory) Operation {
+	return func() {
+		for i, _ := range registers {
+			registers[i] = memory[registerI+Address(i)]
+		}
+	}
 }

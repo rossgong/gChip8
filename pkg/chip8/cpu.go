@@ -12,11 +12,10 @@ type (
 )
 
 const (
-	registerCount       = 16
-	maxSubroutineLevel  = 16
-	instructionSize     = 2   //bytes
-	statusRegister      = 0xF //The F register is used for any status flags
-	digitSpriteLocation = 0x0 //Address where the digit sprites start
+	registerCount      = 16
+	maxSubroutineLevel = 16
+	instructionSize    = 2   //bytes
+	statusRegister     = 0xF //The F register is used for any status flags
 )
 
 type CPU struct {
@@ -30,6 +29,7 @@ type CPU struct {
 	programCounter Address
 	stackPointer   byte
 	stack          [maxSubroutineLevel]Address
+	ram            *Memory
 
 	execute Operation
 
@@ -173,11 +173,11 @@ func decodeF(cpu *CPU, xRegister *byte, lastByte byte) Operation {
 	case 0x29: //LD Load location of digit sprite into I
 		return loadDigit(&cpu.RegisterI, *xRegister)
 	case 0x33: //LD Store BCD representations of register x into I, I+1, I+2
-		return storeBCD(cpu.RegisterI, *xRegister) //TODO: add memory
+		return storeBCD(cpu.RegisterI, *xRegister, cpu.ram)
 	case 0x55: //LD Store registers starting at memory location I
-		return storeRegisters(&cpu.Registers, cpu.RegisterI)
+		return storeRegisters(&cpu.Registers, cpu.RegisterI, cpu.ram)
 	case 0x65: //LD Load registers from memory locations starting at location I
-		return loadRegisters(&cpu.Registers, cpu.RegisterI)
+		return loadRegisters(&cpu.Registers, cpu.RegisterI, cpu.ram)
 	}
 	return nil
 }
