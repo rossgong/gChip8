@@ -55,31 +55,31 @@ func skipInstructionIfTrue(programCounter *Address, condition bool) Operation {
 }
 
 //Load value into register number [0x0-0xF]
-func loadRegister(vX *Register, value Register) Operation {
+func loadRegister(vX *byte, value byte) Operation {
 	return func() {
 		*vX = value
 	}
 }
 
-func or(vX *Register, vY Register) Operation {
+func or(vX *byte, vY byte) Operation {
 	return func() {
 		*vX |= vY
 	}
 }
 
-func and(vX *Register, vY Register) Operation {
+func and(vX *byte, vY byte) Operation {
 	return func() {
 		*vX &= vY
 	}
 }
 
-func xor(vX *Register, vY Register) Operation {
+func xor(vX *byte, vY byte) Operation {
 	return func() {
 		*vX ^= vY
 	}
 }
 
-func add(status *Register, vX *Register, vY Register) Operation {
+func add(status *byte, vX *byte, vY byte) Operation {
 	return func() {
 		temp := *vX
 		*vX += vY
@@ -92,7 +92,7 @@ func add(status *Register, vX *Register, vY Register) Operation {
 	}
 }
 
-func subtract(status *Register, vX *Register, vY Register) Operation {
+func subtract(status *byte, vX *byte, vY byte) Operation {
 	return func() {
 		temp := *vX
 		*vX -= vY
@@ -104,14 +104,14 @@ func subtract(status *Register, vX *Register, vY Register) Operation {
 	}
 }
 
-func shiftRight(status *Register, vX *Register) Operation {
+func shiftRight(status *byte, vX *byte) Operation {
 	return func() {
 		*status = *vX & 1 //Shift right bit unto status
 		*vX >>= 1
 	}
 }
 
-func subtractN(status *Register, vX *Register, vY Register) Operation {
+func subtractN(status *byte, vX *byte, vY byte) Operation {
 	return func() {
 		temp := *vX
 		*vX = vY - *vX
@@ -123,7 +123,7 @@ func subtractN(status *Register, vX *Register, vY Register) Operation {
 	}
 }
 
-func shiftLeft(status *Register, vX *Register) Operation {
+func shiftLeft(status *byte, vX *byte) Operation {
 	return func() {
 		*status = *vX >> 7 //Shift Left bit unto status
 		*vX <<= 1
@@ -137,13 +137,13 @@ func loadAddress(registerI *Address, value Address) Operation {
 	}
 }
 
-func jumpOffset(programCounter *Address, offset Register, address Address) Operation {
+func jumpOffset(programCounter *Address, offset byte, address Address) Operation {
 	return jump(programCounter, address+Address(offset))
 }
 
-func randByteMasked(rand *rand.Rand, vX *Register, mask Register) Operation {
+func randByteMasked(rand *rand.Rand, vX *byte, mask byte) Operation {
 	return func() {
-		rand := Register(rand.Uint64() >> 56) //Shift random uin64 56 places in order to have only 8 bits of random
+		rand := byte(rand.Uint64() >> 56) //Shift random uin64 56 places in order to have only 8 bits of random
 		*vX = rand & mask
 	}
 }
@@ -151,11 +151,11 @@ func randByteMasked(rand *rand.Rand, vX *Register, mask Register) Operation {
 /*
 TODO: Implement GPU
 */
-func draw(cpu *CPU, vX *Register, vY Register, nibble uint8) Operation {
+func draw(cpu *CPU, vX *byte, vY byte, nibble uint8) Operation {
 	return nil
 }
 
-func loadDelay(delay Register, vX *Register) Operation {
+func loadDelay(delay byte, vX *byte) Operation {
 	return func() {
 		*vX = delay
 	}
@@ -165,25 +165,25 @@ func loadKeyPress(cpu *CPU) Operation {
 	return nil
 }
 
-func setDelay(delayRegister *Register, vX Register) Operation {
+func setDelay(delayRegister *byte, vX byte) Operation {
 	return func() {
 		*delayRegister = vX
 	}
 }
 
-func setSound(soundTimer *Register, vX Register) Operation {
+func setSound(soundTimer *byte, vX byte) Operation {
 	return func() {
 		*soundTimer = vX
 	}
 }
 
-func addI(registerI *Address, vX Register) Operation {
+func addI(registerI *Address, vX byte) Operation {
 	return func() {
 		*registerI += Address(vX)
 	}
 }
 
-func loadDigit(registerI *Address, vX Register) Operation {
+func loadDigit(registerI *Address, vX byte) Operation {
 	return func() {
 		*registerI = (Address(vX) * 5) + digitSpriteLocation
 	}
@@ -192,7 +192,7 @@ func loadDigit(registerI *Address, vX Register) Operation {
 /*
 	TODO: Needs memory
 */
-func storeBCD(registerI Address, vX Register /*, memory*/) Operation {
+func storeBCD(registerI Address, vX byte /*, memory*/) Operation {
 	return func() {
 
 	}
@@ -201,7 +201,7 @@ func storeBCD(registerI Address, vX Register /*, memory*/) Operation {
 /*
 	TODO: Needs memory
 */
-func storeRegisters(registers *[registerCount]Register, registerI Address /*, memory*/) Operation {
+func storeRegisters(registers *[registerCount]byte, registerI Address /*, memory*/) Operation {
 	return func() {
 
 	}
@@ -210,7 +210,7 @@ func storeRegisters(registers *[registerCount]Register, registerI Address /*, me
 /*
 	TODO: Needs memory
 */
-func loadRegisters(registers *[registerCount]Register, registerI Address /*, memory*/) Operation {
+func loadRegisters(registers *[registerCount]byte, registerI Address /*, memory*/) Operation {
 	return func() {
 
 	}
