@@ -42,24 +42,26 @@ type cpu struct {
 	random *rand.Rand
 }
 
-func (cpu *cpu) initialize(ram *memory) {
+func (cpu *cpu) initialize(ram *memory, keys *Input, display *Display) {
 	cpu.programCounter = initialPC
-	cpu.ram = ram
-
 	cpu.random = rand.New(rand.NewSource(time.Hour.Nanoseconds()))
+
+	cpu.ram = ram
+	cpu.keys = keys
+	cpu.display = display
 }
 
 func (cpu *cpu) cycle() error {
 	if !cpu.isWaitingForInput {
 		//fetch
 		opcode, err := cpu.fetch()
-		if err == nil {
+		if err != nil {
 			return err
 		}
 
 		//decode
 		cpu.execute, err = cpu.decode(opcode)
-		if err == nil {
+		if err != nil {
 			return err
 		}
 	}
@@ -71,8 +73,9 @@ func (cpu *cpu) cycle() error {
 func (cpu *cpu) fetch() (Instruction, error) {
 	address := cpu.programCounter
 	cpu.programCounter += 2
-	_ = address
-	return 0, fmt.Errorf("fetch error not implemented")
+	result := Instruction(cpu.ram[address+1])
+	result |= Instruction(cpu.ram[address]) << 8
+	return result, nil
 }
 
 func (cpu *cpu) decode(opcode Instruction) (Operation, error) {
@@ -99,7 +102,7 @@ func (cpu *cpu) decode(opcode Instruction) (Operation, error) {
 		return loadRegister(&cpu.Registers[maskXRegister(opcode)], maskEndingByte(opcode)), nil
 	case 0x7000: //ADD Adds byte into register
 		xRegister := maskXRegister(opcode)
-		return add(&cpu.Registers[statusRegister], &cpu.Registers[xRegister], cpu.Registers[xRegister]), nil
+		return add(&cpu.Registers[statusRegister], &cpu.Registers[xRegister], maskEndingByte(opcode)), nil
 	case 0x8000: //Various math functions requires both registers
 		xRegister := &cpu.Registers[maskXRegister(opcode)]
 		yRegister := cpu.Registers[maskYRegister(opcode)]
