@@ -20,6 +20,16 @@ func (ram *memory) loadProgam(program []byte) error {
 	return nil
 }
 
+func (memory *memory) getSprite(address Address, size byte) []byte {
+	sprite := make([]byte, size)
+
+	for i, _ := range sprite {
+		sprite[i] = memory[address+Address(i)]
+	}
+
+	return sprite
+}
+
 func (ram *memory) loadFont() {
 	for i, fontByte := range font {
 		ram[i+digitSpriteLocation] = fontByte

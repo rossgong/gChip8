@@ -34,6 +34,7 @@ type cpu struct {
 	stack             [maxSubroutineLevel]Address
 	ram               *memory
 	keys              *Input
+	display           *Display
 	isWaitingForInput bool
 
 	execute Operation
@@ -121,10 +122,11 @@ func (cpu *cpu) decode(opcode Instruction) (Operation, error) {
 	case 0xC000: //RND load a register x with a random byte AND a byte mask
 		return randByteMasked(cpu.random, &cpu.Registers[maskXRegister(opcode)], maskEndingByte(opcode)), nil
 	case 0xD000: //DRW
-		xRegister := &cpu.Registers[maskXRegister(opcode)]
+		xRegister := cpu.Registers[maskXRegister(opcode)]
 		yRegister := cpu.Registers[maskYRegister(opcode)]
-		lastNibble := opcode & 0x000F //Mask to solo the last nibble
-		draw(cpu, xRegister, yRegister, uint8(lastNibble))
+		lastNibble := byte(opcode & 0x000F) //Mask to solo the last nibble
+
+		return draw(cpu.display, cpu.ram.getSprite(cpu.RegisterI, lastNibble), xRegister, yRegister, &cpu.Registers[statusRegister]), nil
 	case 0xE000: //Keyboard functions
 		xRegister := cpu.Registers[maskXRegister(opcode)]
 		lastByte := byte(opcode & 0x00FF) //Mask to solo the last byte
@@ -151,7 +153,7 @@ func (cpu *cpu) decode(opcode Instruction) (Operation, error) {
 func decode0(cpu *cpu, lastByte byte) (Operation, error) {
 	switch lastByte {
 	case 0xE0: //CLS clear display
-		return clearDisplay()
+		return clearDisplay(cpu.display), nil
 	case 0xEE: //RET Return from subroutine
 		return subroutineReturn(cpu)
 	}

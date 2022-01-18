@@ -9,14 +9,10 @@ import (
 //These for the most part map to opCode functions
 
 //CLS opcode
-/*
-TODO: Implement GPU
-func clearDisplay(display *GPU) Operation {
-	return GPU.clear()
-}
-*/
-func clearDisplay() (Operation, error) {
-	return nil, fmt.Errorf("cls error: display not implemented")
+func clearDisplay(display *Display) Operation {
+	return func() {
+		*display = Display{}
+	}
 }
 
 //Return from subroutine
@@ -151,11 +147,14 @@ func randByteMasked(rand *rand.Rand, vX *byte, mask byte) Operation {
 	}
 }
 
-/*
-TODO: Implement GPU
-*/
-func draw(cpu *cpu, vX *byte, vY byte, nibble uint8) Operation {
-	return nil
+func draw(display *Display, sprite []byte, vX byte, vY byte, status *byte) Operation {
+	return func() {
+		if display.drawSprite(sprite, vX, vY) {
+			*status = 1
+		} else {
+			*status = 0
+		}
+	}
 }
 
 func loadKeyPress(cpu *cpu, vX *byte, keys *Input) Operation {
