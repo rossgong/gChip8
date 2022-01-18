@@ -20,7 +20,7 @@ func clearDisplay() (Operation, error) {
 }
 
 //Return from subroutine
-func subroutineReturn(cpu *CPU) (Operation, error) {
+func subroutineReturn(cpu *cpu) (Operation, error) {
 	if cpu.stackPointer > 0 {
 		return func() {
 			cpu.programCounter = cpu.stack[cpu.stackPointer]
@@ -41,7 +41,7 @@ func jumpOffset(programCounter *Address, offset byte, address Address) Operation
 	return jump(programCounter, address+Address(offset))
 }
 
-func subroutineCall(cpu *CPU, subroutine Address) (Operation, error) {
+func subroutineCall(cpu *cpu, subroutine Address) (Operation, error) {
 	if cpu.stackPointer < maxSubroutineLevel {
 		return func() {
 			cpu.stack[cpu.stackPointer] = cpu.programCounter
@@ -154,11 +154,11 @@ func randByteMasked(rand *rand.Rand, vX *byte, mask byte) Operation {
 /*
 TODO: Implement GPU
 */
-func draw(cpu *CPU, vX *byte, vY byte, nibble uint8) Operation {
+func draw(cpu *cpu, vX *byte, vY byte, nibble uint8) Operation {
 	return nil
 }
 
-func loadKeyPress(cpu *CPU) Operation {
+func loadKeyPress(cpu *cpu) Operation {
 	return nil
 }
 
@@ -174,7 +174,7 @@ func loadDigit(registerI *Address, vX byte) Operation {
 	}
 }
 
-func storeBCD(registerI Address, vX byte, memory *Memory) Operation {
+func storeBCD(registerI Address, vX byte, memory *memory) Operation {
 	return func() {
 		//i < 3 is so it includes the 0 and detects when the value overflows janky but works
 		for i := Address(2); i < 3; i-- {
@@ -185,7 +185,7 @@ func storeBCD(registerI Address, vX byte, memory *Memory) Operation {
 	}
 }
 
-func storeRegisters(registers *[registerCount]byte, registerI Address, memory *Memory) Operation {
+func storeRegisters(registers *[registerCount]byte, registerI Address, memory *memory) Operation {
 	return func() {
 		for i, value := range registers {
 			memory[registerI+Address(i)] = value
@@ -193,9 +193,9 @@ func storeRegisters(registers *[registerCount]byte, registerI Address, memory *M
 	}
 }
 
-func loadRegisters(registers *[registerCount]byte, registerI Address, memory *Memory) Operation {
+func loadRegisters(registers *[registerCount]byte, registerI Address, memory *memory) Operation {
 	return func() {
-		for i, _ := range registers {
+		for i := range registers {
 			registers[i] = memory[registerI+Address(i)]
 		}
 	}

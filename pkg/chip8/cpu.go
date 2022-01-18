@@ -18,7 +18,7 @@ const (
 	statusRegister     = 0xF //The F register is used for any status flags
 )
 
-type CPU struct {
+type cpu struct {
 	//Accessible registers
 	Registers     [registerCount]byte
 	DelayRegister byte
@@ -29,14 +29,14 @@ type CPU struct {
 	programCounter Address
 	stackPointer   byte
 	stack          [maxSubroutineLevel]Address
-	ram            *Memory
+	ram            *memory
 
 	execute Operation
 
 	random rand.Rand
 }
 
-func (cpu *CPU) Cycle() error {
+func (cpu *cpu) Cycle() error {
 	//fetch
 	opcode, err := cpu.fetch()
 	if err == nil {
@@ -53,14 +53,14 @@ func (cpu *CPU) Cycle() error {
 	return nil
 }
 
-func (cpu *CPU) fetch() (Instruction, error) {
+func (cpu *cpu) fetch() (Instruction, error) {
 	address := cpu.programCounter
 	cpu.programCounter += 2
 	_ = address
 	return 0, fmt.Errorf("fetch error not implemented")
 }
 
-func (cpu *CPU) decode(opcode Instruction) (Operation, error) {
+func (cpu *cpu) decode(opcode Instruction) (Operation, error) {
 	startingNibble := opcode & 0xF000 //Mask to solo the first nibble
 
 	switch startingNibble {
@@ -123,7 +123,7 @@ func (cpu *CPU) decode(opcode Instruction) (Operation, error) {
 	return nil, fmt.Errorf("decode error: 0x%X not implemented/supported", opcode)
 }
 
-func decode0(cpu *CPU, lastByte byte) (Operation, error) {
+func decode0(cpu *cpu, lastByte byte) (Operation, error) {
 	switch lastByte {
 	case 0xE0: //CLS clear display
 		return clearDisplay()
@@ -158,7 +158,7 @@ func decode8(statusRegister *byte, xRegister *byte, yValue byte, lastByte byte) 
 	return nil
 }
 
-func decodeF(cpu *CPU, xRegister *byte, lastByte byte) Operation {
+func decodeF(cpu *cpu, xRegister *byte, lastByte byte) Operation {
 	switch lastByte {
 	case 0x07: //LD Load delay into register X
 		return loadRegister(xRegister, cpu.DelayRegister)

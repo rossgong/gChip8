@@ -8,9 +8,9 @@ const (
 	digitSpriteLocation = 0x0 //Address where the digit sprites start
 )
 
-type Memory [RamSize]byte
+type memory [RamSize]byte
 
-func (ram *Memory) loadProgam(program []byte) error {
+func (ram *memory) loadProgam(program []byte) error {
 	if len(program)-200 > RamSize {
 		return fmt.Errorf("ram error: program is too large and cannot be loaded into memory")
 	}
@@ -20,7 +20,7 @@ func (ram *Memory) loadProgam(program []byte) error {
 	return nil
 }
 
-func (ram *Memory) loadFont() {
+func (ram *memory) loadFont() {
 	for i, fontByte := range font {
 		ram[i+digitSpriteLocation] = fontByte
 	}
