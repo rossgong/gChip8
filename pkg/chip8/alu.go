@@ -158,8 +158,25 @@ func draw(cpu *cpu, vX *byte, vY byte, nibble uint8) Operation {
 	return nil
 }
 
-func loadKeyPress(cpu *cpu) Operation {
-	return nil
+func loadKeyPress(cpu *cpu, vX *byte, keys *Input) Operation {
+	cpu.isWaitingForInput = true
+	initialKeys := *keys
+	return func() {
+		if initialKeys >= *keys { //We are waiting for a release which would be when a bit is unset
+			initialKeys = *keys //Reset keys to check against as additional keys could be pressed
+		} else {
+			keysReleased := ^(^initialKeys | *keys) //Bitmagic or NOTImplication
+			for i := byte(0); i < numKeys; i++ {
+				if keysReleased.checkKey(0) { //Check first key
+					*vX = i
+					cpu.isWaitingForInput = false
+					break
+				} else { //If not shift and then check again
+					keysReleased >>= 1
+				}
+			}
+		}
+	}
 }
 
 func addI(registerI *Address, vX byte) Operation {

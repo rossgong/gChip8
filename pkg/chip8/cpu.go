@@ -3,6 +3,7 @@ package chip8
 import (
 	"fmt"
 	"math/rand"
+	"time"
 )
 
 type (
@@ -16,6 +17,8 @@ const (
 	maxSubroutineLevel = 16
 	instructionSize    = 2   //bytes
 	statusRegister     = 0xF //The F register is used for any status flags
+
+	initialPC = 0x200
 )
 
 type cpu struct {
@@ -26,27 +29,38 @@ type cpu struct {
 	RegisterI     Address //Register used for addresses
 
 	//Internal data
-	programCounter Address
-	stackPointer   byte
-	stack          [maxSubroutineLevel]Address
-	ram            *memory
+	programCounter    Address
+	stackPointer      byte
+	stack             [maxSubroutineLevel]Address
+	ram               *memory
+	keys              *Input
+	isWaitingForInput bool
 
 	execute Operation
 
-	random rand.Rand
+	random *rand.Rand
 }
 
-func (cpu *cpu) Cycle() error {
-	//fetch
-	opcode, err := cpu.fetch()
-	if err == nil {
-		return err
-	}
+func (cpu *cpu) initialize(ram *memory) {
+	cpu.programCounter = initialPC
+	cpu.ram = ram
 
-	//decode
-	cpu.execute, err = cpu.decode(opcode)
-	if err == nil {
-		return err
+	cpu.random = rand.New(rand.NewSource(time.Hour.Nanoseconds()))
+}
+
+func (cpu *cpu) cycle() error {
+	if !cpu.isWaitingForInput {
+		//fetch
+		opcode, err := cpu.fetch()
+		if err == nil {
+			return err
+		}
+
+		//decode
+		cpu.execute, err = cpu.decode(opcode)
+		if err == nil {
+			return err
+		}
 	}
 	//execute
 	cpu.execute()
@@ -105,11 +119,22 @@ func (cpu *cpu) decode(opcode Instruction) (Operation, error) {
 	case 0xB000: //JP Offset opcode address with register 0 and jump there
 		return jumpOffset(&cpu.programCounter, cpu.Registers[0], maskAddress(opcode)), nil
 	case 0xC000: //RND load a register x with a random byte AND a byte mask
-		return randByteMasked(&cpu.random, &cpu.Registers[maskXRegister(opcode)], maskEndingByte(opcode)), nil
+		return randByteMasked(cpu.random, &cpu.Registers[maskXRegister(opcode)], maskEndingByte(opcode)), nil
 	case 0xD000: //DRW
-		break
+		xRegister := &cpu.Registers[maskXRegister(opcode)]
+		yRegister := cpu.Registers[maskYRegister(opcode)]
+		lastNibble := opcode & 0x000F //Mask to solo the last nibble
+		draw(cpu, xRegister, yRegister, uint8(lastNibble))
 	case 0xE000: //Keyboard functions
-		break
+		xRegister := cpu.Registers[maskXRegister(opcode)]
+		lastByte := byte(opcode & 0x00FF) //Mask to solo the last byte
+		if lastByte == 0x9E {
+			return skipInstructionIfTrue(&cpu.programCounter,
+				cpu.keys.checkKey(xRegister)), nil
+		} else if lastByte == 0xA1 {
+			return skipInstructionIfTrue(&cpu.programCounter,
+				!cpu.keys.checkKey(xRegister)), nil
+		}
 	case 0xF000:
 		xRegister := &cpu.Registers[maskXRegister(opcode)]
 		lastByte := byte(opcode & 0x00FF) //Mask to solo the last byte
@@ -163,7 +188,7 @@ func decodeF(cpu *cpu, xRegister *byte, lastByte byte) Operation {
 	case 0x07: //LD Load delay into register X
 		return loadRegister(xRegister, cpu.DelayRegister)
 	case 0x0A: //LD Load Keypress
-		return loadKeyPress(cpu)
+		return loadKeyPress(cpu, xRegister, cpu.keys)
 	case 0x15: //LD Load register X into delay
 		return loadRegister(&cpu.DelayRegister, *xRegister)
 	case 0x18: //LD Load register X into sound
