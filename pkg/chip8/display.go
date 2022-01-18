@@ -14,6 +14,7 @@ func (display *Display) drawSprite(sprite []byte, x byte, y byte) bool {
 	bitOffset := x % 8     //This is the offset the the first byte needs to be shifts right
 	startingXByte := x / 8 //First byte that needs to be XORed
 
+	// fmt.Printf("draw(%v,%v)\n", x, y)
 	for i, spriteLine := range sprite {
 		display[y+byte(i)][startingXByte] ^= (spriteLine >> bitOffset)
 		if bitOffset > 0 {
@@ -38,12 +39,12 @@ func rowToBoolArray(row *[defaultByteWidth]byte) [defaultWidth]bool {
 	result := [defaultWidth]bool{}
 
 	currentByte := byte(0)
-	for bit, _ := range result {
+	for bit := range result {
 		if bit%8 == 0 {
 			currentByte = row[bit/8]
 		}
 
-		result[bit] = (currentByte & 0x10) > 0 //Mask off last bit
+		result[bit] = (currentByte & 0x80) > 0 //Mask off last bit
 		currentByte <<= 1                      //Shift left to get the next bit
 	}
 
