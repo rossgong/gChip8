@@ -23,7 +23,7 @@ func (ram *memory) loadProgam(program []byte) error {
 func (memory *memory) getSprite(address Address, size byte) []byte {
 	sprite := make([]byte, size)
 
-	for i, _ := range sprite {
+	for i := range sprite {
 		sprite[i] = memory[address+Address(i)]
 	}
 
