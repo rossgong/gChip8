@@ -141,9 +141,8 @@ func (cpu *cpu) decode(opcode Instruction) (Operation, error) {
 				!cpu.keys.checkKey(xRegister)), nil
 		}
 	case 0xF000:
-		xRegister := &cpu.Registers[maskXRegister(opcode)]
 		lastByte := byte(opcode & 0x00FF) //Mask to solo the last byte
-		op := decodeF(cpu, xRegister, lastByte)
+		op := decodeF(cpu, maskXRegister(opcode), lastByte)
 
 		//This is needed as not all 0xFxxx opcodes are valid
 		if op != nil {
@@ -188,26 +187,26 @@ func decode8(statusRegister *byte, xRegister *byte, yValue byte, lastByte byte) 
 	return nil
 }
 
-func decodeF(cpu *cpu, xRegister *byte, lastByte byte) Operation {
+func decodeF(cpu *cpu, xIndex byte, lastByte byte) Operation {
 	switch lastByte {
 	case 0x07: //LD Load delay into register X
-		return loadRegister(xRegister, cpu.DelayRegister)
+		return loadRegister(&cpu.Registers[xIndex], cpu.DelayRegister)
 	case 0x0A: //LD Load Keypress
-		return loadKeyPress(cpu, xRegister, cpu.keys)
+		return loadKeyPress(cpu, &cpu.Registers[xIndex], cpu.keys)
 	case 0x15: //LD Load register X into delay
-		return loadRegister(&cpu.DelayRegister, *xRegister)
+		return loadRegister(&cpu.DelayRegister, cpu.Registers[xIndex])
 	case 0x18: //LD Load register X into sound
-		return loadRegister(&cpu.SoundRegister, *xRegister)
+		return loadRegister(&cpu.SoundRegister, cpu.Registers[xIndex])
 	case 0x1E: //ADD Add register X into I
-		return addI(&cpu.RegisterI, *xRegister)
+		return addI(&cpu.RegisterI, cpu.Registers[xIndex])
 	case 0x29: //LD Load location of digit sprite into I
-		return loadDigit(&cpu.RegisterI, *xRegister)
+		return loadDigit(&cpu.RegisterI, cpu.Registers[xIndex])
 	case 0x33: //LD Store BCD representations of register x into I, I+1, I+2
-		return storeBCD(cpu.RegisterI, *xRegister, cpu.ram)
+		return storeBCD(cpu.RegisterI, cpu.Registers[xIndex], cpu.ram)
 	case 0x55: //LD Store registers starting at memory location I
-		return storeRegisters(&cpu.Registers, cpu.RegisterI, cpu.ram)
+		return storeRegisters(&cpu.Registers, cpu.RegisterI, xIndex, cpu.ram)
 	case 0x65: //LD Load registers from memory locations starting at location I
-		return loadRegisters(&cpu.Registers, cpu.RegisterI, cpu.ram)
+		return loadRegisters(&cpu.Registers, cpu.RegisterI, xIndex, cpu.ram)
 	}
 	return nil
 }

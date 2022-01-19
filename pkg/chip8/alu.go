@@ -192,27 +192,25 @@ func loadDigit(registerI *Address, vX byte) Operation {
 
 func storeBCD(registerI Address, vX byte, memory *memory) Operation {
 	return func() {
-		//i < 3 is so it includes the 0 and detects when the value overflows janky but works
-		for i := Address(2); i < 3; i-- {
-			//Get the ones place and then "shift" one place over
-			memory[registerI+i] = vX % 10
-			vX /= 10
+		memory[registerI] = vX / 100
+		vX /= 10
+		memory[registerI+1] = vX / 10
+		memory[registerI+2] = vX % 10
+	}
+}
+
+func storeRegisters(registers *[registerCount]byte, registerI Address, vX byte, memory *memory) Operation {
+	return func() {
+		for offset := Address(0); offset <= Address(vX); offset++ {
+			memory[registerI+offset] = registers[offset]
 		}
 	}
 }
 
-func storeRegisters(registers *[registerCount]byte, registerI Address, memory *memory) Operation {
+func loadRegisters(registers *[registerCount]byte, registerI Address, vX byte, memory *memory) Operation {
 	return func() {
-		for i, value := range registers {
-			memory[registerI+Address(i)] = value
-		}
-	}
-}
-
-func loadRegisters(registers *[registerCount]byte, registerI Address, memory *memory) Operation {
-	return func() {
-		for i := range registers {
-			registers[i] = memory[registerI+Address(i)]
+		for offset := Address(0); offset <= Address(vX); offset++ {
+			registers[offset] = memory[registerI+offset]
 		}
 	}
 }
