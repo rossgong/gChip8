@@ -160,6 +160,20 @@ func TestAdd(t *testing.T) {
 	})
 }
 
+func TestStoreBCD(t *testing.T) {
+	program := []byte{0xF3, 0x33}
+	system := createNewSystem(program)
+
+	err := system.cpu.cycle()
+	if err != nil {
+		t.Error(err)
+	} else {
+		if system.cpu.ram[0x300] != 0x00 || system.cpu.ram[0x301] != 0x00 || system.cpu.ram[0x302] != 0x03 {
+			t.Errorf("FAIL [I]=0x%.3X (expected 0x00)\n[I+1]=0x%.3X (expected 0x00)\n[I+2]=0x%.3X (expected 0x03)\n", system.cpu.ram[0x300], system.cpu.ram[0x301], system.cpu.ram[0x302])
+		}
+	}
+}
+
 //Utility functions
 func createNewSystem(program []byte) *Chip8 {
 	system := New(make(chan<- Display), make(<-chan Input), make(<-chan bool))
