@@ -19,8 +19,8 @@ func clearDisplay(display *Display) Operation {
 func subroutineReturn(cpu *cpu) (Operation, error) {
 	if cpu.stackPointer > 0 {
 		return func() {
-			cpu.programCounter = cpu.stack[cpu.stackPointer]
 			cpu.stackPointer--
+			cpu.programCounter = cpu.stack[cpu.stackPointer]
 		}, nil
 	} else {
 		return nil, fmt.Errorf("ret error: stack empty, nothing to return too")
@@ -86,7 +86,7 @@ func add(status *byte, vX *byte, vY byte) Operation {
 	return func() {
 		temp := *vX
 		*vX += vY
-		if temp < *vX { //overflow
+		if temp > *vX { //overflow
 			*status = 1
 		} else {
 			*status = 0
