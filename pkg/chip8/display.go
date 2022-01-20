@@ -6,7 +6,15 @@ const (
 	defaultByteWidth = defaultWidth / 8
 )
 
-type Display [defaultHeight][defaultByteWidth]byte
+type pixelsArray [defaultHeight][defaultByteWidth]byte
+type DotGrid [defaultHeight][defaultWidth]bool
+
+//Struct instead of alias for future superchip resolution support
+type Display struct {
+	pixels pixelsArray
+
+	displayHasChanged bool
+}
 
 //Returns collison
 func (display *Display) drawSprite(sprite []byte, x byte, y byte) bool {
@@ -16,21 +24,28 @@ func (display *Display) drawSprite(sprite []byte, x byte, y byte) bool {
 
 	// fmt.Printf("draw(%v,%v)\n", x, y)
 	for i, spriteLine := range sprite {
-		display[y+byte(i)][startingXByte] ^= (spriteLine >> bitOffset)
+		display.pixels[y+byte(i)][startingXByte] ^= (spriteLine >> bitOffset)
 		if bitOffset > 0 {
-			display[y+byte(i)][startingXByte+1] ^= (spriteLine << (8 - bitOffset)) //Shift right for the second byte
+			display.pixels[y+byte(i)][startingXByte+1] ^= (spriteLine << (8 - bitOffset)) //Shift right for the second byte
 		}
 	}
+	display.displayHasChanged = true
 
 	return hasCollided
 }
 
-func (display *Display) ToBoolArray() [defaultHeight][defaultWidth]bool {
+func (display *Display) clearScreen() {
+	display.pixels = pixelsArray{}
+	display.displayHasChanged = true
+}
+
+func (display *Display) ToBoolArray() DotGrid {
 	result := [defaultHeight][defaultWidth]bool{}
 
 	for y := 0; y < defaultHeight; y++ {
-		result[y] = rowToBoolArray(&display[y])
+		result[y] = rowToBoolArray(&display.pixels[y])
 	}
+	display.displayHasChanged = false
 
 	return result
 }

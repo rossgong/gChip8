@@ -11,7 +11,7 @@ import (
 //CLS opcode
 func clearDisplay(display *Display) Operation {
 	return func() {
-		*display = Display{}
+		display.clearScreen()
 	}
 }
 
