@@ -176,7 +176,7 @@ func TestStoreBCD(t *testing.T) {
 
 //Utility functions
 func createNewSystem(program []byte) *Chip8 {
-	system := New(make(chan<- DotGrid), make(<-chan Input), make(<-chan bool))
+	system := New(make(chan<- Display), make(<-chan Input), make(<-chan bool))
 
 	for i := range system.cpu.Registers {
 		system.cpu.Registers[i] = byte(i)

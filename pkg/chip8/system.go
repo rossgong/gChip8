@@ -16,7 +16,7 @@ type Chip8 struct {
 	input   Input
 	display Display
 
-	displayChannel chan<- DotGrid
+	displayChannel chan<- Display
 	inputChannel   <-chan Input
 	powerChannel   <-chan bool
 
@@ -25,7 +25,7 @@ type Chip8 struct {
 	cyclesPerFrame int
 }
 
-func New(cDisp chan<- DotGrid, cInput <-chan Input, cPower <-chan bool) *Chip8 {
+func New(cDisp chan<- Display, cInput <-chan Input, cPower <-chan bool) *Chip8 {
 	system := Chip8{}
 	system.ram.loadFont()
 	system.cpu.initialize(&system.ram, &system.input, &system.display)
@@ -66,9 +66,8 @@ func (system *Chip8) Run() error {
 		if system.cpu.DelayRegister > 0 {
 			system.cpu.DelayRegister--
 		}
-		if system.display.displayHasChanged {
-			system.displayChannel <- system.display.ToBoolArray()
-		}
+
+		system.displayChannel <- system.display
 	}
 
 	return nil

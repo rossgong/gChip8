@@ -13,7 +13,7 @@ type DotGrid [defaultHeight][defaultWidth]bool
 type Display struct {
 	pixels pixelsArray
 
-	displayHasChanged bool
+	hasChanged bool
 }
 
 //Returns collison
@@ -29,14 +29,14 @@ func (display *Display) drawSprite(sprite []byte, x byte, y byte) bool {
 			display.pixels[y+byte(i)][startingXByte+1] ^= (spriteLine << (8 - bitOffset)) //Shift right for the second byte
 		}
 	}
-	display.displayHasChanged = true
+	display.hasChanged = true
 
 	return hasCollided
 }
 
 func (display *Display) clearScreen() {
 	display.pixels = pixelsArray{}
-	display.displayHasChanged = true
+	display.hasChanged = true
 }
 
 func (display *Display) ToBoolArray() DotGrid {
@@ -45,9 +45,13 @@ func (display *Display) ToBoolArray() DotGrid {
 	for y := 0; y < defaultHeight; y++ {
 		result[y] = rowToBoolArray(&display.pixels[y])
 	}
-	display.displayHasChanged = false
+	display.hasChanged = false
 
 	return result
+}
+
+func (display Display) HasChanged() bool {
+	return display.hasChanged
 }
 
 func rowToBoolArray(row *[defaultByteWidth]byte) [defaultWidth]bool {
