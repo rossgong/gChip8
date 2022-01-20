@@ -45,7 +45,6 @@ func (display *Display) ToBoolArray() DotGrid {
 	for y := 0; y < defaultHeight; y++ {
 		result[y] = rowToBoolArray(&display.pixels[y])
 	}
-	display.hasChanged = false
 
 	return result
 }

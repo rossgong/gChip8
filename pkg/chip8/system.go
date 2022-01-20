@@ -68,6 +68,7 @@ func (system *Chip8) Run() error {
 		}
 
 		system.displayChannel <- system.display
+		system.display.hasChanged = false
 	}
 
 	return nil
