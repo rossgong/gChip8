@@ -1,5 +1,7 @@
 package chip8
 
+import "fmt"
+
 const (
 	defaultWidth     = 64
 	defaultHeight    = 32
@@ -19,13 +21,13 @@ type Display struct {
 //Returns collison
 func (display *Display) drawSprite(sprite []byte, x byte, y byte) bool {
 	hasCollided := false
-	bitOffset := x % 8     //This is the offset the the first byte needs to be shifts right
-	startingXByte := x / 8 //First byte that needs to be XORed
+	bitOffset := x % 8            //This is the offset the the first byte needs to be shifts right
+	startingXByte := (x % 64) / 8 //First byte that needs to be XORed
 
-	// fmt.Printf("draw(%v,%v)\n", x, y)
+	fmt.Printf("draw(%v,%v)*%v\n", x, y, len(sprite))
 	for i, spriteLine := range sprite {
 		display.pixels[y+byte(i)][startingXByte] ^= (spriteLine >> bitOffset)
-		if bitOffset > 0 {
+		if bitOffset > 0 && startingXByte+1 < byte(len(display.pixels[0])) {
 			display.pixels[y+byte(i)][startingXByte+1] ^= (spriteLine << (8 - bitOffset)) //Shift right for the second byte
 		}
 	}
