@@ -44,7 +44,7 @@ type cpu struct {
 
 func (cpu *cpu) initialize(ram *memory, keys *Input, display *Display) {
 	cpu.programCounter = initialPC
-	cpu.random = rand.New(rand.NewSource(time.Hour.Nanoseconds()))
+	cpu.random = rand.New(rand.NewSource(time.Now().UnixMilli()))
 
 	cpu.ram = ram
 	cpu.keys = keys
