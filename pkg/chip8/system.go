@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	defaultFrequency = 2000.0 //hz
-	counterFrequency = 60.0   //hz
+	defaultFrequency = 10000.0 //hz
+	counterFrequency = 60.0    //hz
 )
 
 type Chip8 struct {
