@@ -1,7 +1,5 @@
 package chip8
 
-import "fmt"
-
 const (
 	defaultWidth     = 64
 	defaultHeight    = 32
@@ -24,7 +22,7 @@ func (display *Display) drawSprite(sprite []byte, x byte, y byte) bool {
 	bitOffset := x % 8            //This is the offset the the first byte needs to be shifts right
 	startingXByte := (x % 64) / 8 //First byte that needs to be XORed
 
-	fmt.Printf("draw(%v,%v)*%v\n", x, y, len(sprite))
+	// fmt.Printf("draw(%v,%v)*%v\n", x, y, len(sprite))
 	for i, spriteLine := range sprite {
 		display.pixels[y+byte(i)][startingXByte] ^= (spriteLine >> bitOffset)
 		if bitOffset > 0 && startingXByte+1 < byte(len(display.pixels[0])) {

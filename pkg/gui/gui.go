@@ -53,7 +53,6 @@ func (gui *GChipGUI) Run() error {
 				return err
 			}
 		case display := <-gui.displayChannel:
-			fmt.Println("heh")
 			gui.bufferedFrame = CreateImageFromDisplay(&display)
 			gui.frameBuffered = true
 			gui.window.Invalidate()
