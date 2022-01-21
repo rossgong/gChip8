@@ -102,7 +102,8 @@ func (cpu *cpu) decode(opcode Instruction) (Operation, error) {
 		return loadRegister(&cpu.Registers[maskXRegister(opcode)], maskEndingByte(opcode)), nil
 	case 0x7000: //ADD Adds byte into register
 		xRegister := maskXRegister(opcode)
-		return add(&cpu.Registers[statusRegister], &cpu.Registers[xRegister], maskEndingByte(opcode)), nil
+		//dummy byte for status as this opcode doesn't change status
+		return add(new(byte), &cpu.Registers[xRegister], maskEndingByte(opcode)), nil
 	case 0x8000: //Various math functions requires both registers
 		xRegister := &cpu.Registers[maskXRegister(opcode)]
 		yRegister := cpu.Registers[maskYRegister(opcode)]

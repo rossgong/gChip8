@@ -192,7 +192,6 @@ func loadDigit(registerI *Address, vX byte) Operation {
 
 func storeBCD(registerI Address, vX byte, memory *memory) Operation {
 	return func() {
-		fmt.Println(vX)
 		memory[registerI+2] = vX % 10
 		vX /= 10
 		memory[registerI+1] = vX % 10

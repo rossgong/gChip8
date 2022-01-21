@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	defaultFrequency = 1000.0 //hz
-	counterFrequency = 60.0   //hz
+	defaultFrequency = 60.0 //hz
+	counterFrequency = 60.0 //hz
 )
 
 type Chip8 struct {
@@ -56,8 +56,7 @@ func (system *Chip8) Run() error {
 			}
 		}
 
-		for duration := time.Since(batchStart); duration.Seconds() > batchTime; duration = time.Since(batchStart) {
-
+		for duration := time.Since(batchStart); duration.Seconds() < batchTime; duration = time.Since(batchStart) {
 		}
 
 		if system.cpu.SoundRegister > 0 {
@@ -67,8 +66,10 @@ func (system *Chip8) Run() error {
 			system.cpu.DelayRegister--
 		}
 
-		system.displayChannel <- system.display
-		system.display.hasChanged = false
+		if system.display.hasChanged {
+			system.displayChannel <- system.display
+			system.display.hasChanged = false
+		}
 	}
 
 	return nil

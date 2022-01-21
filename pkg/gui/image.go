@@ -1,4 +1,4 @@
-package view
+package gui
 
 import (
 	"image"
@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultScale = 3
+	defaultScale = 5
 )
 
 //Default color definitions
@@ -49,11 +49,11 @@ func CreateImageFromDisplay(display *chip8.Display) *image.RGBA {
 
 	//Initialize display as all off
 	result := image.NewRGBA(image.Rect(0, 0, x*scale, y*scale))
-	draw.Draw(result, result.Bounds(), &offImage, image.Point{}, draw.Src)
+	draw.Draw(result, result.Bounds(), &onImage, image.Point{}, draw.Src)
 
 	mask := pixelMask{display.ToBoolArray(), scale}
 
-	draw.DrawMask(result, result.Bounds(), &onImage, image.Point{}, mask, image.Point{}, draw.Src)
+	draw.DrawMask(result, result.Bounds(), &offImage, image.Point{}, mask, image.Point{}, draw.Src)
 
 	return result
 }
