@@ -53,6 +53,10 @@ func (display Display) HasChanged() bool {
 	return display.hasChanged
 }
 
+func (display Display) GetSize() (maxX, maxY int) {
+	return defaultWidth, defaultHeight
+}
+
 func rowToBoolArray(row *[defaultByteWidth]byte) [defaultWidth]bool {
 	result := [defaultWidth]bool{}
 
