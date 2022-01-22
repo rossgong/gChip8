@@ -29,7 +29,7 @@ func main() {
 	}()
 
 	go func() {
-		window := gui.New(displayChannel)
+		window := gui.New(displayChannel, inputChannel)
 		err := window.Run()
 		if err != nil {
 			log.Fatal(err)

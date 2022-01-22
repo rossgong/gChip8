@@ -57,6 +57,10 @@ func (system *Chip8) Run() error {
 		}
 
 		for duration := time.Since(batchStart); duration.Seconds() < batchTime; duration = time.Since(batchStart) {
+			select {
+			case system.input = <-system.inputChannel:
+			default:
+			}
 		}
 
 		if system.cpu.SoundRegister > 0 {

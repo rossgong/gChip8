@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"time"
 
 	"gioui.org/app"
 	"gioui.org/f32"
 	"gioui.org/io/event"
+	"gioui.org/io/key"
 	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -16,21 +18,24 @@ import (
 	"gongaware.org/gChip8/pkg/chip8"
 )
 
+const inputHz = 60.0
+
 type GChipGUI struct {
 	window *app.Window
 
 	currentFrame  image.Image
 	bufferedFrame image.Image
 	currentOps    *op.Ops
+	guiInput      chip8.Input
 
 	frameBuffered bool
 
 	//channel to engine
-	// inputChannel <-chan chip8.Input
+	inputChannel   chan<- chip8.Input
 	displayChannel <-chan chip8.Display
 }
 
-func New(dispChan <-chan chip8.Display) GChipGUI {
+func New(dispChan <-chan chip8.Display, inputChan chan<- chip8.Input) GChipGUI {
 	result := GChipGUI{}
 	result.window = app.NewWindow(
 		app.Title("gChip8"),
@@ -38,6 +43,7 @@ func New(dispChan <-chan chip8.Display) GChipGUI {
 	)
 
 	result.displayChannel = dispChan
+	result.inputChannel = inputChan
 	result.currentOps = new(op.Ops)
 	result.currentFrame = &image.Uniform{color.Black}
 
@@ -45,6 +51,7 @@ func New(dispChan <-chan chip8.Display) GChipGUI {
 }
 
 func (gui *GChipGUI) Run() error {
+	inputFrameTicker := time.NewTicker(time.Second / inputHz)
 	for {
 		select {
 		case event := <-gui.window.Events():
@@ -56,6 +63,8 @@ func (gui *GChipGUI) Run() error {
 			gui.bufferedFrame = CreateImageFromDisplay(&display)
 			gui.frameBuffered = true
 			gui.window.Invalidate()
+		case <-inputFrameTicker.C:
+			gui.inputChannel <- gui.guiInput
 		}
 	}
 }
@@ -78,7 +87,8 @@ func (gui *GChipGUI) handleWindowEvent(event event.Event) error {
 		paint.PaintOp{}.Add(gtx.Ops)
 
 		event.Frame(gtx.Ops)
-
+	case key.Event:
+		handleKeys(event, &gui.guiInput)
 	}
 	return nil
 }
