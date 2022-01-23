@@ -16,13 +16,11 @@ func main() {
 		panic(err)
 	}
 
-	inputChannel := make(chan chip8.Input)
-	displayChannel := make(chan chip8.Display)
-	powerChannel := make(chan bool)
 	errChannel := make(chan error)
 
-	system := chip8.New(displayChannel, inputChannel, powerChannel)
+	system, displayChannel, inputChannel, powerChannel := chip8.New()
 	system.LoadProgram(program)
+	_ = powerChannel //Get rid of error
 
 	go func() {
 		errChannel <- system.Run()

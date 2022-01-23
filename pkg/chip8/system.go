@@ -8,6 +8,8 @@ import (
 const (
 	defaultFrequency = 10000.0 //hz
 	counterFrequency = 60.0    //hz
+
+	channelBuffer
 )
 
 type Chip8 struct {
@@ -25,18 +27,20 @@ type Chip8 struct {
 	cyclesPerFrame int
 }
 
-func New(cDisp chan<- Display, cInput <-chan Input, cPower <-chan bool) *Chip8 {
+func New() (*Chip8, <-chan Display, chan<- Input, chan<- bool) {
 	system := Chip8{}
 	system.ram.loadFont()
 	system.cpu.initialize(&system.ram, &system.input, &system.display)
 	system.frequency = defaultFrequency
 	system.cyclesPerFrame = int(math.Floor(defaultFrequency / counterFrequency))
 
-	system.displayChannel = cDisp
-	system.inputChannel = cInput
-	system.powerChannel = cPower
+	displayChan, inputChan, powerChan := make(chan Display, channelBuffer), make(chan Input, channelBuffer), make(chan bool, channelBuffer)
 
-	return &system
+	system.displayChannel = displayChan
+	system.inputChannel = inputChan
+	system.powerChannel = powerChan
+
+	return &system, displayChan, inputChan, powerChan
 }
 
 func (system *Chip8) LoadProgram(program []byte) {
@@ -45,34 +49,29 @@ func (system *Chip8) LoadProgram(program []byte) {
 
 func (system *Chip8) Run() error {
 	system.IsRunning = true
-	batchTime := 1 / counterFrequency
 
+	delayTicker := time.NewTicker(time.Second / counterFrequency)
 	for system.IsRunning {
-		batchStart := time.Now()
-		for cycle := 0; cycle < system.cyclesPerFrame; cycle++ {
+		select {
+		case <-delayTicker.C:
+			if system.cpu.SoundRegister > 0 {
+				system.cpu.SoundRegister--
+			}
+			if system.cpu.DelayRegister > 0 {
+				system.cpu.DelayRegister--
+			}
+
+			if system.display.hasChanged {
+				system.displayChannel <- system.display
+				system.display.hasChanged = false
+			}
+		case system.input = <-system.inputChannel:
+			// fmt.Printf("%.16b\n", system.input)
+		default:
 			err := system.cpu.cycle()
 			if err != nil {
 				return err
 			}
-		}
-
-		for duration := time.Since(batchStart); duration.Seconds() < batchTime; duration = time.Since(batchStart) {
-			select {
-			case system.input = <-system.inputChannel:
-			default:
-			}
-		}
-
-		if system.cpu.SoundRegister > 0 {
-			system.cpu.SoundRegister--
-		}
-		if system.cpu.DelayRegister > 0 {
-			system.cpu.DelayRegister--
-		}
-
-		if system.display.hasChanged {
-			system.displayChannel <- system.display
-			system.display.hasChanged = false
 		}
 	}
 
