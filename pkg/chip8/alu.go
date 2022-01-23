@@ -161,13 +161,15 @@ func loadKeyPress(cpu *cpu, vX *byte, keys *Input) Operation {
 	cpu.isWaitingForInput = true
 	initialKeys := *keys
 	return func() {
-		if initialKeys >= *keys { //We are waiting for a release which would be when a bit is unset
-			initialKeys = *keys //Reset keys to check against as additional keys could be pressed
+		if *cpu.keys >= initialKeys { //We are waiting for a release which would be when a bit is unset
+			initialKeys = *cpu.keys //Reset keys to check against as additional keys could be pressed
 		} else {
-			keysReleased := ^(^initialKeys | *keys) //Bitmagic or NOTImplication
+			keysReleased := ^(^initialKeys | *cpu.keys) //Bitmagic or NOTImplication
 			for i := byte(0); i < numKeys; i++ {
 				if keysReleased.checkKey(0) { //Check first key
 					*vX = i
+
+					fmt.Printf("input:%v\n", i)
 					cpu.isWaitingForInput = false
 					break
 				} else { //If not shift and then check again
